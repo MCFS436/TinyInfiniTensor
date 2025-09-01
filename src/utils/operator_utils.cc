@@ -4,13 +4,37 @@
 namespace infini {
 
 Shape infer_broadcast(const Shape &A, const Shape &B) {
-
+    if(A == B)
+        return A;
+    auto aRank = A.size();
+    auto bRank = B.size();
+    auto rank = std::max(aRank, bRank);
+    Shape aShape = A;
+    Shape bShape = B;
+    if (aRank < rank) {
+        aShape.insert(aShape.begin(), rank - aRank, 1);
+    }
+    if (bRank < rank) {
+        bShape.insert(bShape.begin(), rank - bRank, 1);
+    }
+    Shape dims(rank);
+    for (long unsigned int i = 0; i < rank; i++) {
+        if (aShape[i] == bShape[i]) {
+            dims[i] = aShape[i];
+        } else if (aShape[i] == 1) {
+            dims[i] = bShape[i];
+        } else if (bShape[i] == 1) {
+            dims[i] = aShape[i];
+        } else {
+            return {}; // incompatible
+        }
+    }
     // =================================== 作业 ===================================
     // TODO：对 A 和 B 进行双向广播，返回广播后的形状。
     // REF: https://github.com/onnx/onnx/blob/main/docs/Broadcasting.md
     // =================================== 作业 ===================================
     
-    return {};
+    return dims;
 }
 
 int get_real_axis(const int &axis, const int &rank) {
