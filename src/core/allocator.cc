@@ -28,22 +28,63 @@ namespace infini
         IT_ASSERT(this->ptr == nullptr);
         // pad the size to the multiple of alignment
         size = this->getAlignedSize(size);
-
+        this->used += size;
+        // for(const auto &block : free_blocks) {//auto it = this->free_blocks.begin(); it != this->free_blocks.end();it++
+        //     if(block.second >= size) {
+        //         size_t addr = block.first;
+        //         size_t block_size = block.second;
+        //         free_blocks.erase(block.first);
+        //         if(block_size > size) {
+        //             free_blocks[addr + size] = block_size - size;
+        //         }
+        //         return addr;
+        //     }
+        // }
+        for (auto it = this->free_blocks.begin(); it != this->free_blocks.end();
+         it++) {
+        if (it->second >= size) {
+            size_t addr = it->first;
+            size_t space = it->second - size;
+            this->free_blocks.erase(it);
+            if (space > 0) {
+                this->free_blocks[addr + size] = space;
+            }
+            return addr;
+        }
+        }
+    this->peak += size;
+    return this->peak - size;
+        
         // =================================== 作业 ===================================
         // TODO: 设计一个算法来分配内存，返回起始地址偏移量
         // =================================== 作业 ===================================
-
-        return 0;
     }
 
     void Allocator::free(size_t addr, size_t size)
     {
         IT_ASSERT(this->ptr == nullptr);
         size = getAlignedSize(size);
-
+        
         // =================================== 作业 ===================================
         // TODO: 设计一个算法来回收内存
         // =================================== 作业 ===================================
+        this->used -= size;
+        if (addr + size == this->peak) {
+        this->peak -= size;
+        return;
+        }
+        for (auto it = this->free_blocks.begin(); it != this->free_blocks.end();it++) {
+        if (it->first + it->second == addr) {
+            it->second += size;
+            return;
+        }
+        if (it->first == addr + size) {
+            this->free_blocks[addr] = size + it->second;
+            this->free_blocks.erase(it);
+            return;
+        }
+    }
+    this->free_blocks[addr] = size;
     }
 
     void *Allocator::getPtr()
